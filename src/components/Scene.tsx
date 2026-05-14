@@ -1,29 +1,37 @@
 import React, { useRef, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, Environment, PerspectiveCamera, ContactShadows, useScroll, ScrollControls, Scroll, Text, MeshDistortMaterial } from '@react-three/drei';
 import * as THREE from 'three';
-import { Nav, Hero, Services, Doctors, BookingFlow, FAQ, Footer } from './Sections';
+import { Nav, Hero, Services, Doctors, BookingFlow, FAQ, Footer, PatientCare } from './Sections';
 
 function DNAHelix() {
+  const meshRef = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    meshRef.current.rotation.y += 0.005;
+  });
+
   const points = useMemo(() => {
     const p = [];
-    for (let i = 0; i < 50; i++) {
-      const angle = i * 0.5;
-      const x = Math.cos(angle) * 1.5;
-      const z = Math.sin(angle) * 1.5;
-      const y = (i - 25) * 0.3;
-      p.push({ pos: [x, y, z], color: i % 2 === 0 ? '#10b981' : '#2563eb' }); // Emerald teal and Royal blue
+    for (let i = 0; i < 60; i++) {
+      const angle = i * 0.4;
+      const x = Math.cos(angle) * 2;
+      const z = Math.sin(angle) * 2;
+      const y = (i - 30) * 0.25;
+      p.push({ pos: [x, y, z], color: i % 2 === 0 ? '#10b981' : '#2563eb' });
       p.push({ pos: [-x, y, -z], color: i % 2 === 0 ? '#2563eb' : '#10b981' });
     }
     return p;
   }, []);
 
   return (
-    <group rotation={[0, 0, Math.PI / 4]} position={[-5, 0, -5]}>
+    <group ref={meshRef} rotation={[0, 0, Math.PI / 6]} position={[-6, 0, -8]}>
       {points.map((p, i) => (
         <mesh key={i} position={p.pos as [number, number, number]}>
-          <sphereGeometry args={[0.1, 16, 16]} />
-          <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={0.5} />
+          <sphereGeometry args={[0.12, 16, 16]} />
+          <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={1} />
         </mesh>
       ))}
     </group>
@@ -56,57 +64,52 @@ function MedicalCross({ position = [2, 0, -2] as [number, number, number] }) {
 
 function SceneContent() {
   const scroll = useScroll();
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     const offset = scroll.offset; // 0 to 1
     
-    // Zoom in and Pan Camera
-    state.camera.position.z = 8 - offset * 4;
-    state.camera.position.x = Math.sin(offset * Math.PI) * 5;
-    state.camera.lookAt(0, 0, 0);
+    // Cinematic camera path
+    state.camera.position.z = THREE.MathUtils.lerp(12, 6, offset);
+    state.camera.position.x = Math.sin(offset * Math.PI) * 12;
+    state.camera.position.y = THREE.MathUtils.lerp(4, -12, offset);
+    state.camera.lookAt(0, -offset * 18, 0);
 
     if (groupRef.current) {
-      // Rotate whole scene based on scroll
-      groupRef.current.rotation.y = offset * Math.PI * 0.5;
-      groupRef.current.position.y = -offset * 10;
+      groupRef.current.rotation.y = offset * Math.PI * 2;
+      groupRef.current.position.y = offset * 6;
     }
   });
 
   return (
     <>
-      <PerspectiveCamera makeDefault ref={cameraRef} position={[0, 0, 8]} fov={45} />
-      <ambientLight intensity={0.8} />
-      <spotLight position={[20, 20, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
-      <pointLight position={[-10, 10, -10]} intensity={1} color="#0d9488" />
+      <PerspectiveCamera makeDefault position={[0, 4, 12]} fov={45} />
+      <ambientLight intensity={1} />
+      <spotLight position={[20, 20, 10]} angle={0.2} penumbra={1} intensity={4} castShadow />
+      <pointLight position={[-10, 10, -10]} intensity={2} color="#60a5fa" />
       
       <group ref={groupRef}>
         <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
           <DNAHelix />
         </Float>
         
-        <Float speed={1.5} rotationIntensity={1} floatIntensity={1}>
-          <MedicalCross position={[4, 2, -4]} />
-        </Float>
-        
-        <Float speed={1.2} rotationIntensity={0.8} floatIntensity={1.2}>
-          <MedicalCross position={[-3, -4, -2]} />
-        </Float>
+        <MedicalCross position={[6, 4, -8]} />
+        <MedicalCross position={[-8, -6, -6]} />
+        <MedicalCross position={[4, -12, -12]} />
 
-        {/* Floating Abstract Shapes */}
-        {Array.from({ length: 15 }).map((_, i) => (
-          <Float key={i} speed={1 + Math.random()} rotationIntensity={2} floatIntensity={2}>
+        {/* Cinematic Particles */}
+        {Array.from({ length: 60 }).map((_, i) => (
+          <Float key={i} speed={0.5 + Math.random()} rotationIntensity={2} floatIntensity={2}>
             <mesh position={[
-              (Math.random() - 0.5) * 20,
-              (Math.random() - 0.5) * 20,
-              -5 - Math.random() * 10
+              (Math.random() - 0.5) * 50,
+              (Math.random() - 0.5) * 50,
+              -15 - Math.random() * 30
             ]}>
-              <sphereGeometry args={[Math.random() * 0.3, 32, 32]} />
+              <sphereGeometry args={[0.05 + Math.random() * 0.1, 16, 16]} />
               <meshStandardMaterial 
-                color={i % 2 === 0 ? '#99f6e4' : '#bfdbfe'} 
+                color={i % 3 === 0 ? '#10b981' : i % 3 === 1 ? '#2563eb' : '#ffffff'} 
                 transparent 
-                opacity={0.3} 
+                opacity={0.15} 
               />
             </mesh>
           </Float>
@@ -115,34 +118,54 @@ function SceneContent() {
 
       <Environment preset="city" />
       <ContactShadows 
-        position={[0, -10, 0]} 
-        opacity={0.5} 
-        scale={40} 
+        position={[0, -20, 0]} 
+        opacity={0.4} 
+        scale={80} 
         blur={2} 
-        far={15} 
+        far={30} 
       />
 
       <Scroll html>
-        <div className="w-screen">
-          <Nav />
+        <div className="scroll-container w-full">
           <Hero />
-          <div className="h-[50vh]" /> {/* Gap for scroll effects */}
+          
+          <div className="h-[20vh] flex items-center justify-center pointer-events-none">
+            <motion.div 
+               initial={{ opacity: 0 }}
+               whileInView={{ opacity: 1 }}
+               className="text-white text-[15vw] font-black opacity-5 uppercase tracking-tighter"
+            >
+              Excellence
+            </motion.div>
+          </div>
+
           <Services />
+          
+          <div className="h-[10vh]" />
+
+          <PatientCare />
+          
+          <div className="h-[10vh]" />
+
           <Doctors />
+          
+          <div className="h-[10vh]" />
+
           <BookingFlow />
           
-          <section className="py-24 px-6 md:px-20 bg-white/30 backdrop-blur-sm border-y border-slate-100">
+          <FAQ />
+          
+          <section className="py-20 px-8 md:px-24 bg-white/10 backdrop-blur-3xl border-y border-white/5">
             <div className="max-w-7xl mx-auto overflow-hidden">
-              <h3 className="text-center text-slate-400 font-bold tracking-widest text-sm uppercase mb-12">Partners & Insurance Providers</h3>
-              <div className="flex flex-wrap justify-center gap-12 md:gap-24 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                {['BlueCross', 'Aetna', 'Cigna', 'UnitedHealth', 'Kaiser'].map((name) => (
-                  <div key={name} className="text-3xl font-black text-slate-400">{name}</div>
+              <h3 className="text-center text-slate-400 font-black tracking-[1em] text-[10px] uppercase mb-24 opacity-50">Strategic Alliances</h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-20 items-center opacity-20 hover:opacity-50 transition-opacity duration-1000">
+                {['Mayo', 'Cedars', 'Cleveland', 'Hopkins', 'Stanford'].map((name) => (
+                  <div key={name} className="text-4xl font-black text-slate-900 tracking-tighter text-center">{name}</div>
                 ))}
               </div>
             </div>
           </section>
 
-          <FAQ />
           <Footer />
         </div>
       </Scroll>
@@ -154,7 +177,7 @@ export default function Scene() {
   return (
     <div className="fixed inset-0 h-screen w-screen z-0">
       <Canvas shadows>
-        <ScrollControls pages={6} damping={0.2}>
+        <ScrollControls pages={7.2} damping={0.2}>
           <SceneContent />
         </ScrollControls>
       </Canvas>

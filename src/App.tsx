@@ -1,9 +1,11 @@
 import React from 'react';
 import Scene from './components/Scene';
+import { Nav } from './components/Sections';
 
 export default function App() {
   return (
     <div className="relative bg-slate-50 min-h-screen">
+      <Nav />
       <Scene />
       
       {/* Top Level Emergency Action */}
